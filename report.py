@@ -19,7 +19,8 @@ def write_report(games, path, result):
             temporary_path = Path(output.name)
             output.write(f"Game Library Tracker\nTotal games: {len(games)}\n\n")
             for game in games:
-                output.write(f"{game['title']} | {game['genre']} | {game['rating']}/5\n")
+                outcome = f"{game['rating']}/5" if game["rating"] is not None else game["status"]
+                output.write(f"{game['title']} | {game['genre']} | {outcome}\n")
             if not games:
                 output.write("Your library is empty.\n")
         temporary_path.replace(path)

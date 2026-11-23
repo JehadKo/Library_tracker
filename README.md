@@ -1,6 +1,6 @@
 # Game Library Tracker
 
-Record the games you have played, their genres, and your ratings from 1 to 5. Select a minimum rating to find your favorites. The Tkinter desktop window sends requests to a local Flask server. Flask owns the SQLite database and returns JSON.
+Track games by title and genre. Give a game a score from 1 to 5, or choose **Not started** or **Dropped** to keep it without a score. Select a minimum rating to find your favorites. The Tkinter desktop window sends requests to a local Flask server. Flask owns the SQLite database and returns JSON.
 
 ## Run on Windows
 
@@ -11,7 +11,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-**Terminal 1** starts Flask. Startup creates `games.sqlite3` and its table if missing. Subsequent starts keep existing games. Leave this terminal open.
+**Terminal 1** starts Flask. Startup creates `games.sqlite3` and its table if missing. An older ratings-only database is upgraded automatically, preserving existing IDs and scores. Leave this terminal open.
 
 ```powershell
 .\.venv\Scripts\python.exe server.py
@@ -23,7 +23,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-Choose **Add game**, enter a title and genre, choose a rating, and click **Save**. To edit or delete, first select a row. **All** clears the minimum-rating filter. **Refresh** reloads the current list.
+Choose **Add game**, enter a title and genre, and select a number, **Not started**, or **Dropped** under **Rating or status**. Click **Save**. Select a row to edit or delete it. Changing a rated game to either status clears its score. **All** shows every game. A numeric minimum shows only scored games that meet the threshold. **Refresh** reloads the current list.
 
 **Terminal 3** exports the whole library, including games hidden by the current filter. With Flask running, use the following command in the project folder.
 
@@ -35,9 +35,9 @@ Open `game_report.txt` beside `report.py`. The helper prints its output path or 
 
 ## Trace one Save click
 
-1. In `app.py`, the Save callback inside `GameLibrary.open_editor` collects the three field values in a dictionary.
+1. In `app.py`, the Save callback inside `GameLibrary.open_editor` collects the title, genre and the player's choice. A numeric choice sends the status `Rated` and its rating. Either unrated choice sends its status alone.
 2. In `client.py`, `request_json` encodes the dictionary as form bytes. Passing those bytes to `urlopen` sends a POST to `/games/add` with a five-second timeout.
-3. In `server.py`, `add_game` calls `read_game_form` to check the title, genre and rating. Valid data goes into an INSERT with three SQL placeholders. The route commits and returns the new ID and a message with HTTP 201.
+3. In `server.py`, `add_game` calls `read_game_form` to check the title, genre, status and rating. It binds four values in an INSERT. Python `None` becomes SQL `NULL` for an unrated game. The route commits and returns the new ID and a message with HTTP 201.
 4. Tkinter closes the editor and requests the list again. Flask reads SQLite, then Tkinter displays the returned records. The current minimum rating still applies.
 
 The row's database ID stays the same if its title or rating changes. The edit and delete routes use that ID in their WHERE clauses. Two games can share a title.
@@ -67,14 +67,17 @@ The checks below exercised real Tkinter widgets and a temporary SQLite database.
 | Persistence | Reopening the database and creating a new window retained the surviving games. |
 | Failure and recovery | A refused request and a timeout showed errors. Refresh worked again in the same window when the test connection recovered. |
 | Text export | The report contained the titles, genres, and ratings, including an accented title. Empty data produced an empty-library report. An unavailable output directory produced a file error. |
+| Rating and status choices | Added both unrated states in the GUI. Changed one record from Not started to 4, then to Dropped and back to Not started. Its ID stayed the same. |
+| Mixed library and export | All showed a rated game and both unrated states. Minimums of 1 and 4 showed only the qualifying rated game. The helper still exported all three with their exact score or status. |
+| Data upgrade and validation | Upgraded populated and emptied legacy tables twice. IDs, ratings and the ID counter survived. Flask and SQLite rejected a numeric rating combined with an unrated status. |
 
-**Live check before presenting.** Start both programs using the commands above. Add a game and close both programs. Restart them and verify that it is still there. Stop only Flask, click Refresh, then restart Flask and click Refresh in the same window. This checks the actual localhost connection on the presentation machine.
+**Local connection check.** Start both programs using the commands above. Add a game and close both programs. Restart them and verify that it is still there. Stop only Flask, click Refresh, then restart Flask and click Refresh in the same window.
 
-## Presentation and submission
+## Project documents
 
-Use `GameLibraryTracker_slides.pdf` alongside the running app. Allow about one minute each for the idea and architecture, six minutes for the live demo, and two minutes to explain a route, class, query, and Git commits. Practice tracing Save and explaining why a stale edit returns 404.
+`Project_Report.pdf` explains the application, implementation and test results. `Game_Library_Tracker.pptx` shows the interface, data flow, and a worked example. The database is created automatically on first launch. Example games shown in the documents are demonstration data.
 
-Publish the local repository to your GitHub account. If private, invite the instructor's GitHub account `majedoh` and verify access. Make the ZIP match the final repository files. Name it `Project_StudentID.zip` with your actual ID. In Blackboard, include your name, student ID, and GitHub URL. Check Blackboard for your deadline and presentation slot.
+Repository: https://github.com/JehadKo/Library_tracker
 
 ## Credits
 

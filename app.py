@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from client import RequestError, request_json
+from game_fields import RATINGS, UNRATED_STATUSES
 
 
 class GameLibrary:
@@ -29,7 +30,7 @@ class GameLibrary:
         tools = ttk.Frame(body)
         tools.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         ttk.Label(tools, text="Minimum rating").pack(side="left", padx=(0, 8))
-        self.minimum = ttk.Combobox(tools, values=("All", "2", "3", "4", "5"),
+        self.minimum = ttk.Combobox(tools, values=("All", *RATINGS),
                                     width=5, state="readonly")
         self.minimum.set("All")
         self.minimum.pack(side="left")
@@ -40,7 +41,7 @@ class GameLibrary:
         self.table = ttk.Treeview(body, columns=("title", "genre", "rating"),
                                   show="headings", selectmode="browse")
         for key, label, width in (("title", "Game title", 300), ("genre", "Genre", 145),
-                                  ("rating", "Rating / 5", 85)):
+                                  ("rating", "Rating (1–5) or status", 150)):
             self.table.heading(key, text=label, anchor="w")
             self.table.column(key, width=width, minwidth=65, anchor="w")
         self.table.grid(row=1, column=0, sticky="nsew")
@@ -76,8 +77,9 @@ class GameLibrary:
             return
         self.table.delete(*self.table.get_children())
         for game in games:
+            choice = game["rating"] if game["rating"] is not None else game["status"]
             self.table.insert("", "end", iid=str(game["id"]),
-                              values=(game["title"], game["genre"], game["rating"]))
+                              values=(game["title"], game["genre"], choice))
         self.update_buttons()
         if games:
             count = len(games)
@@ -102,23 +104,29 @@ class GameLibrary:
         form.pack()
         title = ttk.Entry(form, width=36)
         genre = ttk.Entry(form, width=36)
-        rating = ttk.Combobox(form, values=(1, 2, 3, 4, 5), width=7, state="readonly")
+        choice = ttk.Combobox(form, values=(*RATINGS, *UNRATED_STATUSES),
+                              width=16, state="readonly")
         for row, (label, widget) in enumerate((("Game title", title), ("Genre", genre),
-                                               ("Rating (1–5)", rating))):
+                                               ("Rating or status", choice))):
             ttk.Label(form, text=label).grid(row=row, column=0, sticky="w", padx=(0, 12), pady=5)
             widget.grid(row=row, column=1, sticky="w", pady=5)
         if game_id:
-            old_title, old_genre, old_rating = self.table.item(game_id, "values")
+            old_title, old_genre, old_choice = self.table.item(game_id, "values")
             title.insert(0, old_title)
             genre.insert(0, old_genre)
-            rating.set(old_rating)
+            choice.set(old_choice)
 
         feedback = tk.StringVar()
         ttk.Label(form, textvariable=feedback, foreground="#93391e", wraplength=330).grid(
             row=3, column=0, columnspan=2, sticky="w", pady=4)
 
         def save():
-            fields = {"title": title.get(), "genre": genre.get(), "rating": rating.get()}
+            selection = choice.get()
+            fields = {"title": title.get(), "genre": genre.get()}
+            if selection in UNRATED_STATUSES:
+                fields["status"] = selection
+            else:
+                fields.update(status="Rated", rating=selection)
             path = f"/games/{game_id}/edit" if game_id else "/games/add"
             try:
                 result = request_json(path, fields)

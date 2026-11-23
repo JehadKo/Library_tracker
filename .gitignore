@@ -225,3 +225,8 @@ __marimo__/
 # Game Library Tracker local data
 games.sqlite3*
 game_report.txt
+
+# Earlier presentation drafts and personal rehearsal copy
+GameLibraryTracker_slides.pdf
+GameLibraryTracker_slides.pptx
+Game_Library_Study_Guide.pdf
