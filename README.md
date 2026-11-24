@@ -11,7 +11,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-**Terminal 1** starts Flask. Startup creates `games.sqlite3` and its table if missing. An older ratings-only database is upgraded automatically, preserving existing IDs and scores. Leave this terminal open.
+**Terminal 1** starts Flask. A new database starts with three sample games: Xenoblade Chronicles (RPG, 5/5), Hades (Roguelike, Dropped), and Outer Wilds (Adventure, Not started). You can edit or delete them like any other game. Later starts preserve your library, including an empty one. An older ratings-only database is upgraded automatically, preserving existing IDs and scores. Leave this terminal open.
 
 ```powershell
 .\.venv\Scripts\python.exe server.py
@@ -81,4 +81,4 @@ Repository: https://github.com/JehadKo/Library_tracker
 
 ## Credits
 
-The Advanced Programming 462 individual project brief provided the application requirements and the client/server communication pattern. OpenAI Codex assisted with implementation, testing, documentation, and presentation materials.
+The project brief provided the application requirements and the client/server communication pattern. OpenAI Codex assisted with implementation, testing, documentation, and presentation materials.

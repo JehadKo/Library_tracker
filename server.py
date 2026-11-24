@@ -49,7 +49,16 @@ def init_db():
                 )
             )
         """)
-        if migrate:
+        if not columns:
+            db.executemany(
+                "INSERT INTO games (title, genre, status, rating) VALUES (?, ?, ?, ?)",
+                [
+                    ("Hades", "Roguelike", "Dropped", None),
+                    ("Outer Wilds", "Adventure", "Not started", None),
+                    ("Xenoblade Chronicles", "RPG", "Rated", 5),
+                ],
+            )
+        elif migrate:
             db.execute("""
                 INSERT INTO games (id, title, genre, rating)
                 SELECT id, title, genre, rating FROM games_legacy
